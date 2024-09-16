@@ -11,39 +11,46 @@ import java.io.LineNumberReader;
  */
 public class RequestAnalyzer {
     /** implicit contract: must not be null */
-    private FileRequestHandler rh = new FileRequestHandler();
+    private FileRequestHandler fileRequestHandler = new FileRequestHandler();
+    private ServletRequestHandler servletRequestHandler = new ServletRequestHandler();
 
     /**
      * implicit contract: may be null protected by if (l != null) below
      */
-    private BasicLogger l = new BasicLogger();
+    private Basicl l = new Basicl();
 
-    // The rest of the code does not change
     public void handleRequest(Request r) throws IOException {
         r.in = r.s.getInputStream();
-        String rq = new LineNumberReader(new InputStreamReader(r.in)).readLine();
-        if (l != null)
-            l.log(rq);
-        String[] requestParts = rq.split(" ");
-        if (requestParts.length <= 0) {
-            throw new CanNotCompleteTheRequestException("Invalid request : " + rq);
+        String requestLine = new LineNumberReader(new InputStreamReader(r.in)).readLine();
+        if (l != null) {
+            l.log(requestLine);
         }
+
+        if (requestLine == null || requestLine.isEmpty()) {
+            throw new CanNotCompleteTheRequestException("Invalid request: " + requestLine);
+        }
+
+        String[] requestParts = requestLine.split(" ");
+        if (requestParts.length < 2) {
+            throw new CanNotCompleteTheRequestException("Invalid request: " + requestLine);
+        }
+
         RequestType type = RequestType.valueOf(requestParts[0]);
-        if (type != null) {
-            r.type = type;
-            int firstSpace = rq.indexOf(' ', 0);
-            if (rq.charAt(firstSpace + 1) != '/') {
-                throw new CanNotCompleteTheRequestException("Need / to begin request after " + type.name() + " : " + rq);
+        if (type == null) {
+            throw new CanNotCompleteTheRequestException("Invalid request type: " + requestParts[0]);
+        }
+
+        r.type = type;
+        r.url = requestParts[1];
+
+        try {
+            if (r.url.startsWith("/servlet")) {
+                servletRequestHandler.handleRequest(r);
+            } else {
+                fileRequestHandler.handleRequest(r);
             }
-            int secondSpace = rq.indexOf(' ', firstSpace + 1);
-            if (secondSpace < 0) {
-                throw new CanNotCompleteTheRequestException("Need \" HTTP/1.0\" or \" HTTP/1.1\" at the end of the request : " + rq);
-            }
-            // Removing TypeRequest, space and the first /
-            r.url = rq.substring(firstSpace + 2, rq.indexOf(' ', firstSpace + 1));
-            rh.handleRequest(r);
-        } else {
-            throw new CanNotCompleteTheRequestException("Invalid request : " + rq);
+        } catch (CanNotCompleteTheRequestException e) {
+            new ErrorRequestHandler().handleRequest(r);
         }
     }
 }
