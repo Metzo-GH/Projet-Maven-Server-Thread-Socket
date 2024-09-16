@@ -9,7 +9,7 @@ public class ErrorRequestHandler {
                           "Content-Type: text/plain\r\n" +
                           "Content-Length: 29\r\n" +
                           "\r\n" +
-                          "Comanche: document not found.";
+                          "Commande: document not found.";
         r.out.write(response.getBytes());
     }
 }
