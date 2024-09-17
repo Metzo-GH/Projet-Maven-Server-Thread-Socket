@@ -17,7 +17,7 @@ public class RequestAnalyzer {
     /**
      * implicit contract: may be null protected by if (l != null) below
      */
-    private Basicl l = new Basicl();
+    private BasicLogger l = new BasicLogger();
 
     public void handleRequest(Request r) throws IOException {
         r.in = r.s.getInputStream();
